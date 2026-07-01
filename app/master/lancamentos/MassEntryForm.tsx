@@ -28,6 +28,14 @@ export default function MassEntryForm({
     [firstWeekday, total]
   );
 
+  const selectedEntries = useMemo(
+    () =>
+      professionals
+        .map((p) => ({ professional: p, value: Number(amounts[p.id] || 0) }))
+        .filter((e) => e.value > 0),
+    [professionals, amounts]
+  );
+
   function toggleDate(day: number) {
     const key = toDateKey(new Date(year, month - 1, day));
     setSelectedDates((prev) => (prev.includes(key) ? prev.filter((d) => d !== key) : [...prev, key]));
@@ -97,22 +105,54 @@ export default function MassEntryForm({
       <div className="space-y-2">
         <p className="text-xs font-medium text-voya-charcoal">Valor por profissional</p>
         <div className="grid sm:grid-cols-2 gap-2">
-          {professionals.map((p) => (
-            <div key={p.id} className="flex items-center gap-2">
-              <span className="text-sm flex-1 truncate">{p.name}</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="R$"
-                value={amounts[p.id] ?? ""}
-                onChange={(e) => setAmounts((prev) => ({ ...prev, [p.id]: e.target.value }))}
-                className="input-field w-28"
-              />
-            </div>
-          ))}
+          {professionals.map((p) => {
+            const filled = Number(amounts[p.id] || 0) > 0;
+            return (
+              <div
+                key={p.id}
+                className={clsx(
+                  "flex items-center gap-2 rounded-lg px-2 py-1 transition",
+                  filled && "bg-voya-rose/15"
+                )}
+              >
+                <span className={clsx("text-sm flex-1 truncate", filled && "font-medium")}>{p.name}</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="R$"
+                  value={amounts[p.id] ?? ""}
+                  onChange={(e) => setAmounts((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                  className="input-field w-28"
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
+
+      {selectedEntries.length > 0 && (
+        <div className="rounded-lg border border-voya-rose/30 bg-voya-cream/60 p-3 space-y-1">
+          <p className="text-xs font-medium text-voya-charcoal">
+            Você vai lançar para {selectedEntries.length} profissional(is)
+            {selectedDates.length > 0 ? ` em ${selectedDates.length} dia(s)` : ""}:
+          </p>
+          <ul className="text-xs text-voya-charcoal/70 space-y-0.5">
+            {selectedEntries.map(({ professional, value }) => (
+              <li key={professional.id}>
+                • {professional.name} —{" "}
+                {value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                {selectedDates.length > 1
+                  ? ` (${(value / selectedDates.length).toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })} por dia)`
+                  : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <input
         type="text"

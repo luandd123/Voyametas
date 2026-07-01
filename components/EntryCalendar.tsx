@@ -29,6 +29,9 @@ export default function EntryCalendar({
   const [observation, setObservation] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editAmount, setEditAmount] = useState("");
+  const [editObservation, setEditObservation] = useState("");
 
   const entryMap = useMemo(() => {
     const map: Record<string, DailyEntry> = {};
@@ -111,6 +114,41 @@ export default function EntryCalendar({
     fd.set("id", id);
     startTransition(async () => {
       await deleteDailyEntry(fd);
+    });
+  }
+
+  function startEdit(entry: DailyEntry) {
+    setEditingId(entry.id);
+    setEditAmount(String(entry.amount));
+    setEditObservation(entry.observation ?? "");
+    setMessage(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditAmount("");
+    setEditObservation("");
+  }
+
+  function saveEdit(entry: DailyEntry) {
+    const amount = Number(editAmount);
+    if (Number.isNaN(amount) || amount < 0) {
+      setMessage("Informe um valor válido para editar.");
+      return;
+    }
+    const fd = new FormData();
+    fd.set("professionalId", professionalId);
+    fd.set("dates", JSON.stringify([entry.entry_date]));
+    fd.set("totalAmount", String(amount));
+    fd.set("observation", editObservation);
+    setMessage(null);
+    startTransition(async () => {
+      const result = await saveDailyEntries(fd);
+      if (result?.error) setMessage(result.error);
+      else {
+        setMessage("Lançamento corrigido.");
+        cancelEdit();
+      }
     });
   }
 
@@ -241,28 +279,69 @@ export default function EntryCalendar({
       {entries.length > 0 && (
         <div className="pt-3 border-t border-voya-rose/15">
           <p className="text-xs font-medium text-voya-charcoal mb-2">Lançamentos do mês</p>
-          <div className="space-y-1 max-h-48 overflow-y-auto">
+          <div className="space-y-1 max-h-64 overflow-y-auto">
             {entries
               .slice()
               .sort((a, b) => a.entry_date.localeCompare(b.entry_date))
-              .map((e) => (
-                <div key={e.id} className="flex items-center justify-between gap-2 text-xs py-1">
-                  <span className="truncate">
-                    {new Date(e.entry_date + "T00:00:00").toLocaleDateString("pt-BR")} ·{" "}
-                    {formatBRL(e.amount)}
-                    {e.observation ? ` · ${e.observation}` : ""}
-                  </span>
-                  {canEdit && (
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(e.id)}
-                      className="text-red-600 hover:underline shrink-0"
-                    >
-                      remover
-                    </button>
-                  )}
-                </div>
-              ))}
+              .map((e) =>
+                editingId === e.id ? (
+                  <div key={e.id} className="flex flex-col sm:flex-row gap-2 py-2 border-t border-voya-rose/10 first:border-0">
+                    <span className="text-xs shrink-0 pt-2">
+                      {new Date(e.entry_date + "T00:00:00").toLocaleDateString("pt-BR")}
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editAmount}
+                      onChange={(ev) => setEditAmount(ev.target.value)}
+                      className="input-field sm:max-w-[120px] text-xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Observação"
+                      value={editObservation}
+                      onChange={(ev) => setEditObservation(ev.target.value)}
+                      className="input-field text-xs"
+                    />
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => saveEdit(e)}
+                        disabled={isPending}
+                        className="btn-primary text-xs px-3 py-1.5"
+                      >
+                        Salvar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEdit}
+                        className="btn-secondary text-xs px-3 py-1.5"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div key={e.id} className="flex items-center justify-between gap-2 text-xs py-1">
+                    <span className="truncate">
+                      {new Date(e.entry_date + "T00:00:00").toLocaleDateString("pt-BR")} ·{" "}
+                      {formatBRL(e.amount)}
+                      {e.observation ? ` · ${e.observation}` : ""}
+                    </span>
+                    {canEdit && (
+                      <span className="flex gap-3 shrink-0">
+                        <button type="button" onClick={() => startEdit(e)} className="text-voya-roseDark hover:underline">
+                          editar
+                        </button>
+                        <button type="button" onClick={() => handleDelete(e.id)} className="text-red-600 hover:underline">
+                          remover
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                )
+              )}
           </div>
         </div>
       )}

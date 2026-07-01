@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import GoalForm from "./GoalForm";
-import { MONTH_NAMES, formatBRL } from "@/lib/calculations";
+import { MONTH_NAMES } from "@/lib/calculations";
+import MetasManager from "./MetasManager";
 
 export default async function MetasPage({
   searchParams,
@@ -27,32 +27,7 @@ export default async function MetasPage({
         </h1>
       </div>
 
-      <GoalForm professionals={professionals ?? []} month={month} year={year} />
-
-      <div className="card overflow-x-auto">
-        <p className="text-sm font-medium text-voya-charcoal mb-3">Metas definidas neste mês</p>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-voya-charcoal/50 text-xs uppercase">
-              <th className="pb-2">Profissional</th>
-              <th className="pb-2 text-right">Meta inicial</th>
-              <th className="pb-2 text-right">Meta geral</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(professionals ?? []).map((p) => {
-              const g = goals?.find((g) => g.professional_id === p.id);
-              return (
-                <tr key={p.id} className="border-t border-voya-rose/10">
-                  <td className="py-2">{p.name}</td>
-                  <td className="py-2 text-right">{formatBRL(g?.initial_goal ?? 0)}</td>
-                  <td className="py-2 text-right">{formatBRL(g?.general_goal ?? 0)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <MetasManager professionals={professionals ?? []} goals={goals ?? []} month={month} year={year} />
     </div>
   );
 }
