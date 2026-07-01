@@ -1,4 +1,5 @@
 export type Role = "master" | "profissional";
+export type Theme = "light" | "dark";
 
 export interface Profile {
   id: string;
@@ -6,6 +7,7 @@ export interface Profile {
   email: string;
   role: Role;
   professional_id: string | null;
+  theme: Theme;
 }
 
 export interface Professional {
@@ -37,6 +39,25 @@ export interface MonthLock {
   month: number;
   year: number;
   is_unlocked: boolean;
+}
+
+export interface DailyEntry {
+  id: string;
+  professional_id: string;
+  entry_date: string; // 'YYYY-MM-DD'
+  month: number;
+  year: number;
+  amount: number;
+  observation: string | null;
+  created_by: string | null;
+  created_by_role: string | null;
+}
+
+export interface WorkDayOverride {
+  id: string;
+  professional_id: string;
+  work_date: string; // 'YYYY-MM-DD'
+  is_working_day: boolean;
 }
 
 export interface RankingRow {

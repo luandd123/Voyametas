@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,11 +10,12 @@ const config: Config = {
     extend: {
       colors: {
         voya: {
-          rose: "#D9A9A0",
-          roseDark: "#B8776C",
-          cream: "#FAF6F3",
-          charcoal: "#2E2A28",
-          gold: "#C9A66B",
+          rose: "rgb(var(--color-rose) / <alpha-value>)",
+          roseDark: "rgb(var(--color-roseDark) / <alpha-value>)",
+          cream: "rgb(var(--color-cream) / <alpha-value>)",
+          charcoal: "rgb(var(--color-charcoal) / <alpha-value>)",
+          gold: "rgb(var(--color-gold) / <alpha-value>)",
+          surface: "rgb(var(--color-surface) / <alpha-value>)",
         },
       },
       fontFamily: {

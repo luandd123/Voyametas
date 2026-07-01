@@ -5,15 +5,32 @@
 :root {
   --font-sans: 'Segoe UI', system-ui, sans-serif;
   --font-serif: Georgia, serif;
+
+  /* Tema claro (padrão Voya) — valores em "R G B" para uso com rgb(var(..) / alpha) */
+  --color-cream: 250 246 243;      /* fundo geral */
+  --color-charcoal: 46 42 40;      /* texto principal */
+  --color-rose: 217 169 160;       /* acento suave */
+  --color-roseDark: 184 119 108;   /* acento principal (botões) */
+  --color-gold: 201 166 107;       /* detalhes */
+  --color-surface: 255 255 255;    /* cards, header, sidebar */
+}
+
+.dark {
+  /* Tema escuro — sofisticado, mantendo a identidade rosé/dourada como acento */
+  --color-cream: 22 19 17;         /* fundo geral escuro */
+  --color-charcoal: 240 231 227;   /* texto principal claro */
+  --color-rose: 217 169 160;
+  --color-roseDark: 196 138 126;
+  --color-gold: 214 184 138;
+  --color-surface: 35 30 28;       /* cards, header, sidebar escuros */
 }
 
 body {
-  background-color: #FAF6F3;
-  color: #2E2A28;
+  @apply bg-voya-cream text-voya-charcoal;
 }
 
 .card {
-  @apply bg-white rounded-xl2 shadow-sm border border-voya-rose/20 p-5;
+  @apply bg-voya-surface rounded-xl2 shadow-sm border border-voya-rose/20 p-4 sm:p-5;
 }
 
 .btn-primary {
@@ -21,11 +38,11 @@ body {
 }
 
 .btn-secondary {
-  @apply bg-white border border-voya-rose/40 text-voya-charcoal px-4 py-2 rounded-lg text-sm font-medium hover:bg-voya-cream transition;
+  @apply bg-voya-surface border border-voya-rose/40 text-voya-charcoal px-4 py-2 rounded-lg text-sm font-medium hover:bg-voya-cream transition;
 }
 
 .input-field {
-  @apply w-full border border-voya-rose/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-voya-roseDark/40;
+  @apply w-full border border-voya-rose/30 bg-voya-surface text-voya-charcoal rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-voya-roseDark/40;
 }
 
 .label-field {

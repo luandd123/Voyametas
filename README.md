@@ -13,14 +13,24 @@ Next.js 14 (App Router) + Supabase (banco de dados, autenticação e RLS) + Verc
 
 No painel do Supabase: **SQL Editor → New query**.
 
-1. Cole todo o conteúdo de `schema.sql` (deste projeto) e clique em **Run**.
-2. Depois, cole todo o conteúdo de `rpc_ranking.sql` e clique em **Run** novamente.
+**Instalação nova (projeto ainda vazio):** rode, nesta ordem, `schema.sql` → `rpc_ranking.sql`.
+O `schema.sql` já vem com todas as correções e novidades incorporadas (não precisa rodar as
+migrações 002/003 separadamente nesse caso).
 
-Isso cria:
-- Tabelas: `professionals`, `profiles`, `monthly_goals`, `goal_progress`, `month_locks`, `change_history`
-- Row Level Security (RLS) em todas as tabelas
-- Trigger que cria automaticamente um `profile` quando um usuário é criado no Supabase Auth
-- Função `get_ranking()` usada no ranking por percentual
+**Projeto que já estava em produção (já rodou `schema.sql` e `rpc_ranking.sql` antes):** rode
+só o que ainda não rodou, nesta ordem:
+1. `migration_002_fix_locked_month_bug.sql` (se ainda não rodou)
+2. `migration_003_daily_entries_calendar_theme.sql`
+
+O que a migração 003 adiciona:
+- Tabela `daily_entries`: lançamentos diários (fonte principal dos valores)
+- Tabela `professional_work_days`: exceções ao calendário padrão (dom/seg bloqueados)
+- Trigger que soma automaticamente os lançamentos diários e mantém `goal_progress.amount_done`
+  sempre sincronizado (o campo antigo continua existindo como cache/resumo)
+- Trigger de histórico automático para lançamentos e bloqueios de dia
+- Coluna `theme` em `profiles` + função `set_my_theme()` para o botão claro/escuro
+- Políticas de RLS para tudo isso (Master tem acesso total; profissional só lança/edita nos
+  próprios dias, e só com o mês liberado)
 
 ## 3. Pegar as chaves da API
 
@@ -86,6 +96,37 @@ interface, em **Gerenciar Profissionais**.
    (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`).
 4. Clique em **Deploy**.
 5. Depois do primeiro deploy, se você mudar variáveis de ambiente, use **Redeploy**.
+
+**Se o projeto já estava publicado na Vercel:** nenhuma variável de ambiente nova é necessária
+para esta atualização — as mesmas três de sempre continuam valendo. Basta dar push do código
+atualizado (a Vercel faz redeploy automático a partir do GitHub) e rodar as migrações SQL no
+Supabase (passo 2). Ordem recomendada: primeiro rode o SQL no Supabase, depois faça o deploy do
+código novo — assim o app já encontra as tabelas prontas.
+
+## O que mudou nesta atualização
+
+- **Bug do "mês bloqueado" corrigido** — faltava política de RLS para o primeiro lançamento do
+  mês (INSERT). Ver `migration_002_fix_locked_month_bug.sql`.
+- **Lançamento pelo Master** — o Master agora lança, edita e corrige valores de qualquer
+  profissional, com três formas: calendário (por profissional), lançamento individual rápido
+  e lançamento em massa (várias profissionais de uma vez). Área nova: **Lançamentos**.
+- **Calendário de lançamentos** — tanto a profissional quanto o Master lançam valores
+  selecionando um ou mais dias num calendário mensal; selecionando vários dias, o valor total é
+  dividido igualmente entre eles.
+- **Dias trabalháveis** — domingos e segundas vêm bloqueados por padrão; qualquer um desses dois
+  papéis pode liberar ou bloquear manualmente um dia específico. Média diária/semanal, ritmo e
+  projeção agora usam apenas dias trabalháveis, não o calendário cheio.
+- **Lançamentos diários como fonte da verdade** — nova tabela `daily_entries`; o campo
+  `amount_done` de `goal_progress` virou um cache, sincronizado automaticamente por trigger.
+- **Tema claro/escuro** — botão disponível para Master e profissionais, com preferência salva
+  por usuário (persiste entre sessões e dispositivos).
+- **Responsividade** — tabelas longas (ranking, histórico, ritmo da equipe) viram cards
+  empilhados em telas pequenas; calendário e formulários adaptados para celular.
+- **Filtros novos no dashboard Master** — filtro por profissional e por semana, além do já
+  existente filtro por mês/ano.
+- Nada do que já funcionava foi removido: login, permissões, RLS, CRUDs de profissionais e
+  metas, liberação de meses e histórico continuam intactos (e o histórico agora também registra
+  lançamentos diários e bloqueios de dia automaticamente).
 
 ## Estrutura do projeto
 
