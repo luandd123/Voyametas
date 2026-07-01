@@ -2,7 +2,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { StatCard } from "@/components/StatCard";
 import { RankingTable } from "@/components/RankingTable";
-import { GoalPieChart } from "@/components/charts/GoalPieChart";
 import { ComparisonBarChart } from "@/components/charts/ComparisonBarChart";
 import { RhythmBadge } from "@/components/RhythmBadge";
 import {
@@ -76,10 +75,10 @@ export default async function MasterDashboard({
     };
   });
 
-  const totalInitial = rows.reduce((s, r) => s + r.initialGoal, 0);
-  const totalGeneral = rows.reduce((s, r) => s + r.generalGoal, 0);
   const totalDone = rows.reduce((s, r) => s + r.amountDone, 0);
-  const overallPct = percent(totalDone, totalGeneral);
+  const avgPct =
+    rows.length > 0 ? Math.round((rows.reduce((s, r) => s + r.pctGeneral, 0) / rows.length) * 10) / 10 : 0;
+  const activeCount = rows.length;
 
   const barData = rows.map((r) => ({ name: r.name.split(" ")[0], value: r.amountDone }));
   const rankingByPct = rows
@@ -129,19 +128,19 @@ export default async function MasterDashboard({
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard label="Meta inicial (equipe)" value={formatBRL(totalInitial)} />
-        <StatCard label="Meta geral (equipe)" value={formatBRL(totalGeneral)} />
         <StatCard label="Total realizado" value={formatBRL(totalDone)} />
-        <StatCard label="% geral alcançado" value={`${overallPct}%`} />
+        <StatCard label="Média de atingimento" value={`${avgPct}%`} sub="média do % de cada profissional" />
+        <StatCard label="Profissionais ativas" value={String(activeCount)} />
+        <StatCard
+          label="Melhor desempenho"
+          value={rankingByPct[0] ? rankingByPct[0].name.split(" ")[0] : "—"}
+          sub={rankingByPct[0] ? `${rankingByPct[0].pct_general}% da meta geral` : undefined}
+        />
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        <GoalPieChart done={totalDone} remaining={Math.max(totalGeneral - totalDone, 0)} title="Equipe: realizado x restante" />
-        {weeklyChartData.length > 0 ? (
-          <ComparisonBarChart data={weeklyChartData} title="Realizado por semana" />
-        ) : (
-          <ComparisonBarChart data={barData} title="Realizado por profissional (R$)" />
-        )}
+        <ComparisonBarChart data={barData} title="Realizado por profissional (R$)" />
+        {weeklyChartData.length > 0 && <ComparisonBarChart data={weeklyChartData} title="Realizado por semana" />}
       </div>
 
       {weekFilter && (
